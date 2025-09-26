@@ -1,0 +1,20 @@
+# Terragrunt cache directories
+.terragrunt-cache/
+
+# Terraform files
+*.tfstate
+*.tfstate.*
+*.tfplan
+.terraform/
+.terraform.lock.hcl
+
+# Generated files by Terragrunt
+provider.tf
+backend.tf
+
+# Output directories
+dist/
+
+# OS files
+.DS_Store
+Thumbs.db
