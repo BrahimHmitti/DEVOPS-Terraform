@@ -1,3 +1,4 @@
+# Configuration racine pour l'exercice 3 - Modules & Dynamic Blocks
 terraform {
   required_version = ">= 1.6"
   required_providers {
@@ -6,58 +7,37 @@ terraform {
   }
 }
 
-#provider : à l'aide des providers on peut on peut utiliser des resources comme random
-#générer des mots d'animaux, mots de passe, nombres etc 
-
 provider "random" {}
 provider "local" {}
 
-
-
-resource "random_pet" "pet" {
-  length    = 2
-  prefix    = var.prefix
-  separator = var.separator
-
-  lifecycle {
-    precondition {
-      condition     = length(var.prefix) > 0
-      error_message = "prefix ne peut pas être vide."
-    }
+# Module pet_fleet - génère N pets et fichiers
+module "pet_fleet" {
+  source = "./modules/pet_fleet"
+  
+  pet_configs = {
+    "development" = { prefix = "dev", separator = "-" }
+    "testing"     = { prefix = "test", separator = "_" }
+    "production"  = { prefix = "prod", separator = "-" }
+    "staging"     = { prefix = "stage", separator = "_" }
   }
+  
+  output_directory = "./dist"
 }
 
-resource "local_file" "pet_file" {
-  filename = "${path.module}/dist/pet.txt"
-  content  = random_pet.pet.id
-
-  lifecycle {
-    postcondition {
-      condition     = file(self.filename) == random_pet.pet.id
-      error_message = "Le contenu de ${filename} n'est pas égal au nom généré."
-    }
+# Module script_runner - traite les fichiers générés
+module "script_runner" {
+  source = "./modules/script_runner"
+  
+  # Dépend des fichiers générés par pet_fleet
+  files_to_process = module.pet_fleet.pet_files_list
+  
+  base_command = "echo 'Contenu du fichier pet'"
+  
+  additional_commands = {
+    "validation" = [
+      "echo 'Validation des fichiers générés'",
+      "ls -la ./dist/pet_*.txt || true",
+      "wc -l ./dist/pet_*.txt || true"
+    ]
   }
-}
-
-
-
-
-resource "random_password" "password" {
-    length =  16
-}
-
-# Écrit le nom dans un fichier dist/password.txt
-resource "local_file" "password_file" {
-  filename = "${path.module}/dist/password.txt"
-  content  = random_password.password.result
-}
-
-resource "random_integer" "number" {
-    min = 10
-    max = 100
-}
-
-resource "local_file" "number_file" {
-    filename = "${path.module}/dist/number.txt"
-    content = random_integer.number.result
 }

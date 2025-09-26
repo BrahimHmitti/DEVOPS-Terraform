@@ -32,7 +32,7 @@ run "test_valid_config_should_pass" {
   }
 
   assert {
-    condition = can(regex("^prod_[a-z]+_[a-z]+$", output.pet_name))
-    error_message = "Pattern invalide pour prod_: ${output.pet_name}"
+    condition = can(regex("^prod-[a-z]+-[a-z]+$", output.fleet_pet_names.production))
+    error_message = "Pattern invalide pour prod-: ${output.fleet_pet_names.production}"
   }
 }
